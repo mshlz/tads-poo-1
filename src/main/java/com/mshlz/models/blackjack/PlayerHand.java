@@ -52,7 +52,7 @@ public class PlayerHand implements IPlayableHand {
         return sum;
     }
 
-    public Boolean hasBusted() {
+    public Boolean isBusted() {
         return this.getHandValue() > 21;
     }
 

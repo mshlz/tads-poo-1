@@ -39,9 +39,9 @@ public class App {
                     continue;
                 }
 
-                while (!(player.hasBusted() || action.equals("stand"))) {
+                while (!(player.isBusted() || action.equals("stand"))) {
                     action = JOptionPane.showInputDialog(null,
-                            getRoundInfo(dealer, player) + "\n" + "Qual sua próxima ação? (hit, stand)",
+                            getRoundInfo(dealer, player, false) + "\n" + "Qual sua próxima ação? (hit, stand)",
                             "Jogada #" + (rounds), JOptionPane.QUESTION_MESSAGE);
 
                     switch (action) {
@@ -63,20 +63,20 @@ public class App {
                     }
                 }
 
-                if (player.hasBusted()) {
+                if (player.isBusted()) {
                     JOptionPane.showMessageDialog(null, "Ops! Você estorou!\n" + getRoundInfo(dealer, player, true),
                             "Você perdeu!", JOptionPane.ERROR_MESSAGE);
                     continue;
                 }
 
-                while (dealer.hasBusted() || dealer.getHandValue() < 16) {
+                while (dealer.isBusted() || dealer.getHandValue() < 16) {
                     dealer.addCard(deck.drawCard());
                 }
 
                 int playerSum = player.getHandValue();
                 int dealerSum = dealer.getHandValue();
 
-                if (dealer.hasBusted() || playerSum > dealerSum) {
+                if (dealer.isBusted() || playerSum > dealerSum) {
                     JOptionPane.showMessageDialog(null, "Você ganhou!\n" + getRoundInfo(dealer, player, true),
                             "Você ganhou!", JOptionPane.INFORMATION_MESSAGE);
                 } else if (playerSum < dealerSum) {
@@ -94,12 +94,7 @@ public class App {
         }
     }
 
-    private static String getRoundInfo(DealerHand dealer, PlayerHand player) {
-        return getRoundInfo(dealer, player, false);
-    }
-
     private static String getRoundInfo(DealerHand dealer, PlayerHand player, Boolean revealDealerCards) {
-        String dealerInfo = revealDealerCards ? dealer.getPreviewString(true) : dealer.getPreviewString();
-        return dealerInfo + "\n" + player.getPreviewString() + "\n";
+        return dealer.getPreviewString(revealDealerCards) + "\n" + player.getPreviewString() + "\n";
     }
 }
