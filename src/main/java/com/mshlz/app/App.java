@@ -69,7 +69,7 @@ public class App {
                     continue;
                 }
 
-                while (dealer.isBusted() || dealer.getHandValue() < 16) {
+                while (dealer.getHandValue() < 16) {
                     dealer.addCard(deck.drawCard());
                 }
 
