@@ -1,7 +1,14 @@
 package com.mshlz.app;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 
+import com.mshlz.dao.DatabaseConnection;
 import com.mshlz.exceptions.EmptyDeckException;
 import com.mshlz.models.Deck;
 import com.mshlz.models.FrenchDeck;
@@ -16,8 +23,11 @@ import com.mshlz.models.blackjack.PlayerHand;
 public class App {
     static final String TITLE = "Simple Blackjack";
     static User user;
+    static boolean renderMenu = true;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
+        migrateDB();
+
         user = setupUser();
         mainMenu();
     }
@@ -63,7 +73,7 @@ public class App {
     private static void mainMenu() {
         String[] availableOptions = { "Nova partida", "Ver partidas passadas", "Sair" };
 
-        while (true) {
+        while (renderMenu) {
             int result = JOptionPane.showOptionDialog(null, "O que você deseja fazer?", TITLE,
                     JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, availableOptions, null);
 
@@ -74,7 +84,9 @@ public class App {
                 break;
 
             case JOptionPane.NO_OPTION:
+                renderMenu = false;
                 JOptionPane.showMessageDialog(null, "Suas partidas: xxx", TITLE, JOptionPane.INFORMATION_MESSAGE);
+                showLastMatches();
                 break;
 
             case JOptionPane.CANCEL_OPTION:
@@ -170,7 +182,36 @@ public class App {
         }
     }
 
+    private static void showLastMatches() {
+        String[] items = { "FOO", "BAR" };
+
+        JFrame frame = new JFrame(TITLE.concat(" - Suas ultimas partidas"));
+        JList list = new JList<>(items);
+
+        frame.add(list);
+        frame.setSize(500, 600);
+        frame.setAlwaysOnTop(true);
+
+        frame.show();
+    }
+
     private static String getRoundInfo(DealerHand dealer, PlayerHand player, Boolean revealDealerCards) {
         return dealer.getPreviewString(revealDealerCards) + "\n" + player.getPreviewString() + "\n";
+    }
+
+    private static void migrateDB() throws SQLException {
+        Connection connection = DatabaseConnection.getConnection();		
+        Statement statement = connection.createStatement();
+        // user table
+        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.user (id bigserial primary key, name varchar(255), nickname varchar(255));");
+        // dealer hand table
+        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.dealer_hand (id bigserial primary key, busted bool, blackjack bool, value integer, description varchar(255), date timestamp default now());");
+        // player hand table
+        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.player_hand (id bigserial primary key, busted bool, blackjack bool, value integer, description varchar(255), user_id bigint, date timestamp default now());");
+        // match table
+        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.match (id bigserial primary key, user_id bigint, dealer_hand_id bigint, player_hand_id bigint, won bool, date timestamp default now());");
+        
+        statement.close();
+        connection.commit();
     }
 }
