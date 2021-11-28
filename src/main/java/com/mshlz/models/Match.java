@@ -16,6 +16,15 @@ public class Match {
     public Match() {
     }
 
+    public Match(Long id, User user, DealerHand dealerHand, PlayerHand playerHand, String result, Date date) {
+        this.id = id;
+        this.user = user;
+        this.dealerHand = dealerHand;
+        this.playerHand = playerHand;
+        this.result = result;
+        this.date = date;
+    }
+
     public Long getId() {
         return id;
     }
@@ -68,5 +77,5 @@ public class Match {
     public String toString() {
         return "Match [date=" + date + ", dealerHand=" + dealerHand + ", id=" + id + ", playerHand=" + playerHand
                 + ", result=" + result + ", user=" + user + "]";
-    }    
+    }
 }
