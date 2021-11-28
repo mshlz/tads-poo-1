@@ -1,202 +1,76 @@
 package com.mshlz.app;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-import javax.swing.JFrame;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 
-import com.mshlz.dao.DatabaseConnection;
-import com.mshlz.exceptions.EmptyDeckException;
-import com.mshlz.models.Deck;
-import com.mshlz.models.FrenchDeck;
+import com.mshlz.dao.DBHelpers;
+import com.mshlz.dao.UserDAO;
 import com.mshlz.models.User;
-import com.mshlz.models.blackjack.DealerHand;
-import com.mshlz.models.blackjack.PlayerHand;
 
 /**
  * 
  * @author mshlz
  */
 public class App {
-    static final String TITLE = "Simple Blackjack";
     static User user;
-    static boolean renderMenu = true;
 
     public static void main(String[] args) throws SQLException {
-        // DBHelpers.dropDB(); // to reset database, uncomment this line, run, then comment again
+        // to reset database, uncomment next line, run, then comment again
+        // DBHelpers.dropDB();
         DBHelpers.migrateDB();
 
         user = setupUser();
-        mainMenu();
+
+        Game game = new Game(user);
+        game.start();
     }
 
     private static User setupUser() {
         String name, nickname;
         User user = null;
+        UserDAO userDao = new UserDAO();
 
         do {
-            nickname = JOptionPane.showInputDialog(null, "Qual seu nickname?", TITLE, JOptionPane.QUESTION_MESSAGE);
+            nickname = JOptionPane.showInputDialog(null, "Qual seu nickname?", Game.TITLE,
+                    JOptionPane.QUESTION_MESSAGE);
             if (nickname == null || nickname.trim().length() == 0)
                 continue;
             nickname = nickname.trim().replaceAll(" ", "_");
 
-            // find in DB...
-            user = null;
+            user = userDao.findOneByNickname(nickname);
 
             if (user == null) {
-                JOptionPane.showMessageDialog(null, "Usuário não encontrado!\n\nVamos criar um novo usuário.", TITLE,
+                JOptionPane.showMessageDialog(null, "Usuário não encontrado!\n\nVamos criar um novo usuário.",
+                        Game.TITLE,
                         JOptionPane.INFORMATION_MESSAGE);
 
                 do {
-                    name = JOptionPane.showInputDialog(null, "Qual seu nome?", TITLE, JOptionPane.QUESTION_MESSAGE);
+                    name = JOptionPane.showInputDialog(null, "Qual seu nome?", Game.TITLE,
+                            JOptionPane.QUESTION_MESSAGE);
                 } while (name == null || name.trim().length() == 0);
 
                 // try create in DB
                 user = new User(name, nickname);
-
-                JOptionPane.showMessageDialog(null,
-                        "Usuário criado com sucesso!\n\nNome: " + user.getName() + "\nNickname: " + user.getNickname(),
-                        TITLE, JOptionPane.INFORMATION_MESSAGE);
+                if (userDao.save(user)) {
+                    JOptionPane.showMessageDialog(null,
+                            "Usuário criado com sucesso!\n\nNome: " + user.getName() + "\nNickname: "
+                                    + user.getNickname(),
+                            Game.TITLE, JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(null,
+                            "Ocorreu um erro ao criar seu usuário. Tente novamente.",
+                            Game.TITLE, JOptionPane.ERROR_MESSAGE);
+                    System.exit(1);
+                }
 
             } else {
-                JOptionPane.showMessageDialog(null, "Usuário encontrado!\n\nNome: " + user.getName(), TITLE,
+                JOptionPane.showMessageDialog(null, "Usuário encontrado!\n\nNome: " + user.getName(), Game.TITLE,
                         JOptionPane.INFORMATION_MESSAGE);
             }
 
         } while (user == null);
 
         return user;
-    }
-
-    private static void mainMenu() {
-        String[] availableOptions = { "Nova partida", "Ver partidas passadas", "Sair" };
-
-        while (renderMenu) {
-            int result = JOptionPane.showOptionDialog(null, "O que você deseja fazer?", TITLE,
-                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, availableOptions, null);
-
-            switch (result) {
-
-            case JOptionPane.YES_OPTION:
-                initGame();
-                break;
-
-            case JOptionPane.NO_OPTION:
-                renderMenu = false;
-                JOptionPane.showMessageDialog(null, "Suas partidas: xxx", TITLE, JOptionPane.INFORMATION_MESSAGE);
-                showLastMatches();
-                break;
-
-            case JOptionPane.CANCEL_OPTION:
-            default:
-                JOptionPane.showMessageDialog(null, "Até mais.", TITLE, JOptionPane.INFORMATION_MESSAGE);
-                System.exit(0);
-            }
-        }
-    }
-
-    private static void initGame() {
-        String[] actions = { "Hit (+1)", "Stand" };
-
-        try {
-            int rounds = 0;
-            int action;
-
-            Deck deck = new FrenchDeck();
-            deck.shuffle();
-
-            while (!deck.isEmpty()) {
-                ++rounds;
-                action = -1;
-
-                DealerHand dealer = new DealerHand();
-                PlayerHand player = new PlayerHand();
-
-                for (int i = 0; i < 2; ++i) {
-                    player.addCard(deck.drawCard());
-                    dealer.addCard(deck.drawCard());
-                }
-
-                if (player.getHandValue() == 21) {
-                    JOptionPane.showMessageDialog(null, "Você fez Blackjack!\n\n" + getRoundInfo(dealer, player, true),
-                            "Jogada #" + rounds + " - Blackjack!", JOptionPane.INFORMATION_MESSAGE);
-                    continue;
-                }
-
-                do {
-                    action = JOptionPane.showOptionDialog(null,
-                            getRoundInfo(dealer, player, false) + "\n" + "Qual sua próxima ação?",
-                            "Jogada #" + (rounds), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, actions,
-                            null);
-
-                    switch (action) {
-                    case JOptionPane.YES_OPTION:
-                        player.addCard(deck.drawCard());
-                        System.out.println("player: Hit!");
-                        break;
-                    case JOptionPane.NO_OPTION:
-                        System.out.println("player: Stand!");
-                        break;
-                    default:
-                        action = Integer.MIN_VALUE;
-                        continue;
-                    }
-                } while (!player.isBusted() && action == JOptionPane.YES_OPTION);
-
-                if (player.isBusted()) {
-                    JOptionPane.showMessageDialog(null, "Ops! Você estorou!\n" + getRoundInfo(dealer, player, true),
-                            "Você perdeu!", JOptionPane.ERROR_MESSAGE);
-                    continue;
-                }
-
-                if (action == Integer.MIN_VALUE) {
-                    JOptionPane.showMessageDialog(null, "Você abandonou a partida!", TITLE,
-                            JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-
-                while (dealer.getHandValue() < 16) {
-                    dealer.addCard(deck.drawCard());
-                }
-
-                int playerSum = player.getHandValue();
-                int dealerSum = dealer.getHandValue();
-
-                if (dealer.isBusted() || playerSum > dealerSum) {
-                    JOptionPane.showMessageDialog(null, "Você ganhou!\n" + getRoundInfo(dealer, player, true),
-                            "Você ganhou!", JOptionPane.INFORMATION_MESSAGE);
-                } else if (playerSum < dealerSum) {
-                    JOptionPane.showMessageDialog(null, "Você perdeu!\n" + getRoundInfo(dealer, player, true),
-                            "Você perdeu!", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Empate!\n" + getRoundInfo(dealer, player, true), "Empate!",
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
-
-            }
-        } catch (EmptyDeckException exception) {
-            JOptionPane.showMessageDialog(null, "Ops! Acabaram as cartas do baralho!", "Erro",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private static void showLastMatches() {
-        String[] items = { "FOO", "BAR" };
-
-        JFrame frame = new JFrame(TITLE.concat(" - Suas ultimas partidas"));
-        JList list = new JList<>(items);
-
-        frame.add(list);
-        frame.setSize(500, 600);
-        frame.setAlwaysOnTop(true);
-
-        frame.show();
-    }
-
-    private static String getRoundInfo(DealerHand dealer, PlayerHand player, Boolean revealDealerCards) {
-        return dealer.getPreviewString(revealDealerCards) + "\n" + player.getPreviewString() + "\n";
     }
 }
