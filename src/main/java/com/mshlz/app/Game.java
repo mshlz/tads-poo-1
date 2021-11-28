@@ -1,8 +1,12 @@
 package com.mshlz.app;
 
+import java.text.SimpleDateFormat;
+import java.util.List;
+
 import javax.swing.JFrame;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 
 import com.mshlz.dao.DealerHandDAO;
 import com.mshlz.dao.MatchDAO;
@@ -29,7 +33,8 @@ public class Game {
         showMainMenu();
     }
 
-    // ---- MAIN GAME --------------------------------------------------------------------
+    // ---- MAIN GAME -----------------------------------------------------
+    // --------------------------------------------------------------------
     private void showMainMenu() {
         String[] availableOptions = { "Nova partida", "Ver partidas passadas", "Sair" };
 
@@ -175,22 +180,38 @@ public class Game {
         }
     }
 
-    // ---- SHOW LAST MATCHES ------------------------------------------------------------
+    // ---- SHOW LAST MATCHES -------------------------------------
+    // ------------------------------------------------------------
     private void showLastMatches() {
-        String[] items = { "FOO", "BAR" };
+        MatchDAO matchDao = new MatchDAO();
+        List<Match> lastMatches = matchDao.findLastMatches(this.user, 50);
 
         JFrame frame = new JFrame(TITLE.concat(" - Suas últimas partidas"));
-        JList list = new JList<>(items);
+        SimpleDateFormat dtFormatter = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 
-        frame.add(list);
-        frame.setSize(500, 600);
+        String[][] data = lastMatches.stream().map(match -> {
+            String[] line = {
+                    dtFormatter.format(match.getDate()),
+                    match.getResult(),
+                    match.getPlayerHand().getDescription(),
+                    match.getDealerHand().getDescription()
+            };
+            return line;
+        }).toArray(String[][]::new);
+
+        String[] header = { "Data", "Resultado", "Sua mão", "Mão do Dealer" };
+        JTable table = new JTable(data, header);
+
+        frame.add(new JScrollPane(table));
+        frame.setSize(800, 600);
         frame.setAlwaysOnTop(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        frame.show();
+        frame.setVisible(true);
     }
 
-    // ---- HELPERS ----------------------------------------------------------------------
+    // ---- HELPERS ---------------------------------------------------------
+    // ----------------------------------------------------------------------
     private static String getRoundInfo(DealerHand dealer, PlayerHand player, Boolean revealDealerCards) {
         return dealer.getPreviewString(revealDealerCards) + "\n" + player.getPreviewString() + "\n";
     }
