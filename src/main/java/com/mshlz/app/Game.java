@@ -50,7 +50,6 @@ public class Game {
 
                 case JOptionPane.NO_OPTION:
                     this.renderMenu = false;
-                    JOptionPane.showMessageDialog(null, "Suas partidas: xxx", TITLE, JOptionPane.INFORMATION_MESSAGE);
                     showLastMatches();
                     break;
 
