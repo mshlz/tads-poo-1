@@ -26,7 +26,8 @@ public class App {
     static boolean renderMenu = true;
 
     public static void main(String[] args) throws SQLException {
-        migrateDB();
+        // DBHelpers.dropDB(); // to reset database, uncomment this line, run, then comment again
+        DBHelpers.migrateDB();
 
         user = setupUser();
         mainMenu();
@@ -197,21 +198,5 @@ public class App {
 
     private static String getRoundInfo(DealerHand dealer, PlayerHand player, Boolean revealDealerCards) {
         return dealer.getPreviewString(revealDealerCards) + "\n" + player.getPreviewString() + "\n";
-    }
-
-    private static void migrateDB() throws SQLException {
-        Connection connection = DatabaseConnection.getConnection();		
-        Statement statement = connection.createStatement();
-        // user table
-        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.user (id bigserial primary key, name varchar(255), nickname varchar(255));");
-        // dealer hand table
-        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.dealer_hand (id bigserial primary key, busted bool, blackjack bool, value integer, description varchar(255), date timestamp default now());");
-        // player hand table
-        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.player_hand (id bigserial primary key, busted bool, blackjack bool, value integer, description varchar(255), user_id bigint, date timestamp default now());");
-        // match table
-        statement.executeUpdate("CREATE TABLE IF NOT EXISTS public.match (id bigserial primary key, user_id bigint, dealer_hand_id bigint, player_hand_id bigint, won bool, date timestamp default now());");
-        
-        statement.close();
-        connection.commit();
     }
 }
