@@ -11,8 +11,6 @@ public class PlayerHandDAO extends BaseDAO<PlayerHand> {
 
     @Override
     public Boolean save(PlayerHand hand) {
-
-        System.out.println(hand.getClass());
         try {
             String sql = "INSERT INTO public.player_hand (busted, blackjack, value, description, user_id) VALUES (?,?,?,?,?)";
             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);

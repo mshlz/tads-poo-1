@@ -1,7 +1,5 @@
 package com.mshlz.app;
 
-import java.sql.SQLException;
-
 import javax.swing.JOptionPane;
 
 import com.mshlz.dao.DBHelpers;
@@ -15,7 +13,7 @@ import com.mshlz.models.User;
 public class App {
     static User user;
 
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) {
         // to reset database, uncomment next line, run, then comment again
         // DBHelpers.dropDB();
         DBHelpers.migrateDB();
