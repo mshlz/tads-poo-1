@@ -5,8 +5,13 @@ import java.util.List;
 
 import com.mshlz.interfaces.IPlayableHand;
 import com.mshlz.models.Card;
+import com.mshlz.models.User;
 
-public class PlayerHand implements IPlayableHand {
+public class PlayerHand extends BaseHand implements IPlayableHand {
+    public PlayerHand(User user) {
+        super(user);
+    }
+
     protected List<Card> cards = new ArrayList<>();
 
     public void addCard(Card card) {

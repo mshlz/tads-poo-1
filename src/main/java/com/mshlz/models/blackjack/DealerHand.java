@@ -1,6 +1,9 @@
 package com.mshlz.models.blackjack;
 
 public class DealerHand extends PlayerHand {
+    public DealerHand() {
+        super(null);
+    }
 
     public String getPreviewString(Boolean showAll) {
         return showAll ? "Dealer " + this.cards + " (" + this.getHandValue() + " pontos)" : this.getPreviewString();
