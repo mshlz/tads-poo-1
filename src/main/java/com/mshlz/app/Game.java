@@ -42,7 +42,7 @@ public class Game {
         String[] availableOptions = { "Nova partida", "Ver partidas passadas", "Sair" };
 
         while (this.renderMenu) {
-            int result = JOptionPane.showOptionDialog(null, "O que você deseja fazer?", TITLE,
+            int result = JOptionPane.showOptionDialog(null, this.user.getName() + ", o que você deseja fazer?", TITLE,
                     JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, availableOptions, null);
 
             switch (result) {
@@ -188,7 +188,7 @@ public class Game {
         MatchDAO matchDao = new MatchDAO();
         List<Match> lastMatches = matchDao.findLastMatches(this.user, 50);
 
-        JFrame frame = new JFrame(TITLE.concat(" - Suas últimas partidas"));
+        JFrame frame = new JFrame(TITLE.concat(" - Suas últimas partidas " + this.user.getName()));
         SimpleDateFormat dtFormatter = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 
         String[][] data = lastMatches.stream().map(match -> {

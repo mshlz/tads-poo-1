@@ -24,13 +24,46 @@ public class UserDAO extends BaseDAO<User> {
             }
 
             ResultSet generatedKeys = statement.getGeneratedKeys();
-            
+
             if (!generatedKeys.next()) {
                 throw new SQLException("Creating user failed, no id generated.");
             }
-            
+
             user.setId(generatedKeys.getLong(1));
-            
+
+            connection.commit();
+
+            return true;
+
+        } catch (Exception e) {
+            try {
+                connection.rollback();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public Boolean update(User user) {
+        try {
+            String sql = "" +
+                    "UPDATE public.user" +
+                    "  SET name = ?, nickname = ?" +
+                    "  WHERE id = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+
+            statement.setString(1, user.getName());
+            statement.setString(2, user.getNickname());
+            statement.setLong(3, user.getId());
+
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Update failed, no rows affected.");
+            }
+
             connection.commit();
 
             return true;

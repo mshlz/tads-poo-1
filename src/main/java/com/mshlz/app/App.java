@@ -69,6 +69,31 @@ public class App {
 
         } while (user == null);
 
+        // update
+        String[] actions = { "Iniciar jogo", "Atualizar usuário" };
+        int response = -1;
+        do {
+            response = JOptionPane.showOptionDialog(null,
+                    "O que deseja fazer " + user.getName() + "?",
+                    Game.TITLE, JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+                    actions, null);
+
+            switch (response) {
+                case JOptionPane.YES_OPTION:
+                    return user;
+                case JOptionPane.NO_OPTION:
+                    // edit user
+                    String newName = JOptionPane.showInputDialog(null,
+                            user.getName() + ", para qual nome você deseja alterar?", Game.TITLE,
+                            JOptionPane.QUESTION_MESSAGE);
+                    user.setName(newName);
+                    userDao.update(user);
+                    break;
+                default:
+                    response = -1;
+            }
+        } while (response != -1);
+
         return user;
     }
 }
