@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.mshlz.models.Match;
 import com.mshlz.models.User;
@@ -73,12 +74,13 @@ public class MatchDAO extends BaseDAO<Match> {
                     " " +
                     "WHERE u.id = ?\n" +
                     "ORDER BY match.date DESC\n" +
-                    "LIMIT ?;";
+                    (size == -1 ? "" : "LIMIT ?");
 
             PreparedStatement statement = connection.prepareStatement(sql);
 
             statement.setLong(1, user.getId());
-            statement.setInt(2, size);
+            if (size > 0)
+                statement.setInt(2, size);
 
             ResultSet queryResult = statement.executeQuery();
             List<Match> lastMatches = new ArrayList<>();
@@ -126,4 +128,39 @@ public class MatchDAO extends BaseDAO<Match> {
         return null;
     }
 
+    public Boolean deleteAllFromUser(User user) {
+        try {
+            // stupid as a hell...
+            List<Match> allMatches = this.findLastMatches(user, -1);
+
+            String dealerSql = String.format("DELETE FROM public.dealer_hand WHERE id IN (%s)",
+                allMatches.stream().map(match -> match.getDealerHand().getId().toString()).collect(Collectors.joining(","))
+            );
+            String playerSql = String.format("DELETE FROM public.player_hand WHERE id IN (%s)",
+                allMatches.stream().map(match -> match.getPlayerHand().getId().toString()).collect(Collectors.joining(","))
+            );
+            String matchSql = String.format("DELETE FROM public.match WHERE id IN (%s)",
+                allMatches.stream().map(match -> match.getId().toString()).collect(Collectors.joining(","))
+            );
+
+            PreparedStatement statement = connection.prepareStatement(dealerSql);
+            statement.execute();
+            PreparedStatement statement2 = connection.prepareStatement(playerSql);
+            statement2.execute();
+            PreparedStatement statement3 = connection.prepareStatement(matchSql);
+            statement3.execute();
+
+            connection.commit();
+
+            return true;
+        } catch (Exception e) {
+            try {
+                connection.rollback();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

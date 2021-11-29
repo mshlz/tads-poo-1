@@ -3,8 +3,11 @@ package com.mshlz.app;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
@@ -201,7 +204,20 @@ public class Game {
         String[] header = { "Data", "Resultado", "Sua mão", "Mão do Dealer" };
         JTable table = new JTable(data, header);
 
-        frame.add(new JScrollPane(table));
+        JButton resetButton = new JButton("Remover Histórico");
+        resetButton.addActionListener(event -> {
+            this.resetHistory();
+            frame.setVisible(false);
+            this.renderMenu = true;
+            this.showMainMenu();
+        });
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(new JScrollPane(table));
+        panel.add(resetButton);
+
+        frame.add(panel);
         frame.setSize(800, 600);
         frame.setAlwaysOnTop(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -213,6 +229,12 @@ public class Game {
     // ----------------------------------------------------------------------
     private static String getRoundInfo(DealerHand dealer, PlayerHand player, Boolean revealDealerCards) {
         return dealer.getPreviewString(revealDealerCards) + "\n" + player.getPreviewString() + "\n";
+    }
+
+    private void resetHistory() {
+        MatchDAO matchDao = new MatchDAO();
+        matchDao.deleteAllFromUser(this.user);
+        this.showMessage(TITLE, "Histórico de partidas removido com sucesso!", false);
     }
 
     private void showMessage(String title, String message, Boolean isError) {
